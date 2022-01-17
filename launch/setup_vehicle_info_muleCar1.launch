@@ -1,0 +1,7 @@
+<launch>
+
+<arg name="info_path" default="/home/kenny/catkin_ws/src/acer_control/vehicle_config/xgene_muleCar1.yaml"/>
+
+<rosparam command="load" file="$(arg info_path)"/>
+
+</launch>

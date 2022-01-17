@@ -1,0 +1,64 @@
+vehicle_config:
+  # acer_vendor_ID: 1, xgene_vendor_ID:2
+  vendor_ID: 1
+  car_ID: 1
+  # CAN DEV: 1->Kvaser, 2->SocketCAN
+  CAN_DEV_ID: 1
+
+  STEERING_ANGLE_MAX: 720.0
+#  TURNING_RADIUS_MIN: 3.74
+  WHEEL_BASE: 2.45
+  WHEEL_ANGLE_MAX: 35.16764
+
+  # km/hr
+  SPEED_LIMIT: 20 # km/h
+
+  _K_ACCEL_P_UNTIL20: 20.0
+  _K_ACCEL_I_UNTIL20: 0.2 #0.2
+  _K_ACCEL_D_UNTIL20: 5.0
+  _K_ACCEL_P_UNTIL10: 10.0  #10.0  (for 0-10km/h)
+  _K_ACCEL_I_UNTIL10: 0.2 #0.2 (for 0-10km/h)
+  _K_ACCEL_D_UNTIL10: 5.0
+
+  _K_ACCEL_I_GAIN: 50
+  _K_ACCEL_OFFSET: 35
+  _ACCEL_MAX_I: 1200
+  _ACCEL_PEDAL_MAX: 250
+  _ACCEL_PEDAL_OFFSET: 10
+
+  _K_BRAKE_P: 25.0 #25.0
+  _K_BRAKE_I: 0.7 # 0.3
+  _K_BRAKE_D: 10.0 #1.0
+  _K_BRAKE_I_CYCLES: 21
+  _BRAKE_MAX_I: 200 #1000
+  _BRAKE_PEDAL_MAX: 250
+  _BRAKE_PEDAL_STOPPING_MAX: 250
+  _BRAKE_PEDAL_STOPPING_MED: 165
+  _BRAKE_PEDAL_OFFSET: 10
+
+  _FCW_X: 1.65
+  _FCW_Y: -0.10
+  _FRONT_L_X: 1.6
+  _FRONT_L_Y: 0.5
+  _FRONT_R_X: 1.6
+  _FRONT_R_Y: -0.5
+  _BSD_L_X: -1.6
+  _BSD_L_Y: 0.5
+  _BSD_R_X: -1.6
+  _BSD_R_Y: -0.5
+
+vehicle_ultrasonic_config: #use space to separate six parameter
+  # x y z dir_x dir_y dir_z
+  location_u0: 1.6 0.4 0.62 1 1 1
+  location_u1: 1.6 0 0.62 1 1 1
+  location_u2: 1.6 -0.4 0.62 1 1 1
+  location_u3: -1.64 -0.4 0.52 -1 1 1
+  location_u4: -1.64 0 0.52 -1 1 1
+  location_u5: -1.64 0.4 0.52 -1 1 1
+  location_u6: -1.4 0.52 0.5 1 1 1
+  location_u7: 0 0.5 0.46 1 1 1
+  location_u8: 1.15 0.53 0.58 1 1 1
+  location_u9: 1.15 -0.53 0.58 1 -1 1
+  location_u10: 0 -0.5 0.46 1 -1 1
+  location_u11: -1.4 -0.52 0.5 1 -1 1
+

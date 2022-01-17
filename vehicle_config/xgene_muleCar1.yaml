@@ -1,0 +1,43 @@
+vehicle_info:
+  maximum_steering_angle: 500.0
+  minimum_turning_radius: 3.74
+  wheel_base: 2.45
+
+vehicle_config:
+  # acer_vendor_ID: 1, xgene_vendor_ID:2
+  vendor_ID: 2
+  car_ID: 1
+  # CAN DEV: 1->Kvaser, 2->SocketCAN
+  CAN_DEV_ID: 1
+
+  STEERING_ANGLE_MAX: 500.0
+# TURNING_RADIUS_MIN: 3.74
+  WHEEL_BASE: 2.45
+  WHEEL_ANGLE_MAX: 40.92573
+
+  # km/hr
+  SPEED_LIMIT: 47 # km/h
+
+  _K_ACCEL_P_UNTIL20: 8.0 #25
+  _K_ACCEL_I_UNTIL20: 0.07 #0.07 #0.9
+  _K_ACCEL_D_UNTIL20: 4.0
+  _K_ACCEL_P_UNTIL10: 8.0  #8.0  (for 0-10km/h)
+  _K_ACCEL_I_UNTIL10: 0.07 #0.07 (for 0-10km/h)
+  _K_ACCEL_D_UNTIL10: 4.0
+
+  _K_ACCEL_I_GAIN: 0
+  _K_ACCEL_OFFSET: 10
+  _ACCEL_MAX_I: 4000
+  _ACCEL_PEDAL_MAX: 255
+  _ACCEL_PEDAL_OFFSET: 10
+
+  _K_BRAKE_P: 3.0 #1.0
+  _K_BRAKE_I: 0.35 # 0.3
+  _K_BRAKE_D: 1.0 #1.0
+  _K_BRAKE_I_CYCLES: 20
+  _BRAKE_MAX_I: 1000 #1000
+  _BRAKE_PEDAL_MAX: 200
+  _BRAKE_PEDAL_STOPPING_MAX: 150
+  _BRAKE_PEDAL_STOPPING_MED: 55
+  _BRAKE_PEDAL_OFFSET: 10
+
