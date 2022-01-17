@@ -5,37 +5,23 @@
 Download "Kvaser Linux Drivers and SDK" from https://www.kvaser.com/download/. Please read the README in the driver first. And follow the instructions to install it.  
 <font color=red>***YOU NEED A KVASER USB CANBUS HARDWARE TO CONTROL VEHICLE!***</font>  
 ### ***Step two***  
-Copy acer_vehicle_control to your folder:  
-```bash=
-cp vehicle_socket Autoware/ros/src/socket/packages/vehicle_socket
-```
-
-### ***Step three***  
-Copy vehicle_config to your autoware folder  
-```bash=
-cp vehicle_config Autoware/ros/src/vehicle_config
-```
-
 Compile ROS nodes
 ```bash=
- cd ~/Autoware/ros/src
- catkin_init_workspace
- cd ../
- ./catkin_make_release
+ cd ~/catkin_ws
+ catkin_make
 ```
 ## **Execute**
-### ***Step four***  
+### ***Step three***  
 Setup env
 ```bash=
-  ~/Autoware/ros$ source devel/setup.sh
+  ~/catkin_ws$ source devel/setup.sh
 ```
-### ***Step five***  
+### ***Step four***  
 Loading vehicle parameters to ros
 ```bash=
-cd ~/Autoware/ros/src/vehicle_config
-~/Autoware/ros/src/vehicle_config$ roslaunch setup_vehicle_info<RENAME CAR MODEL HERE>.launch
+roslaunch setup_vehicle_info<RENAME CAR MODEL HERE>.launch
 ```
-### ***Step six***  
+### ***Step five***  
 Launch Acer vehicle controller
 ```bash=
 rosrun vehicle_socket acer_vehicle_control
