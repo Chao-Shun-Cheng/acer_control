@@ -4,6 +4,7 @@
 ### ***Step one***  
 Download "Kvaser Linux Drivers and SDK" from https://www.kvaser.com/download/. Please read the README in the driver first. And follow the instructions to install it.  
 <font color=red>***YOU NEED A KVASER USB CANBUS HARDWARE TO CONTROL VEHICLE!***</font>  
+***gcc version*** : 7
 ### ***Step two***  
 Compile ROS nodes
 ```bash=
