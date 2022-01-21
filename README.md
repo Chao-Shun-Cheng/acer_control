@@ -1,6 +1,7 @@
 # Acer EV Controller
 
 ## **Prepare**
+### **Be sure to clone your own ssh**
 ### ***Step one***  
 Download "Kvaser Linux Drivers and SDK" from https://www.kvaser.com/download/. Please read the README in the driver first. And follow the instructions to install it.  
 <font color=red>***YOU NEED A KVASER USB CANBUS HARDWARE TO CONTROL VEHICLE!***</font>  
