@@ -7,8 +7,6 @@
 #include <jsk_recognition_msgs/BoundingBox.h>
 #include <jsk_recognition_msgs/BoundingBoxArray.h>
 #include <ros/ros.h>
-#include "autoware_msgs/obj_fusion.h"
-#include "autoware_msgs/obj_fusionArray.h"
 
 #include <netinet/in.h>
 #include <pthread.h>
@@ -28,7 +26,7 @@
 ros::Publisher can_pub;
 ros::Publisher mode_pub;
 ros::Publisher obj_pose_pub;
-ros::Publisher obj_fusion_pub;
+
 
 int willExit = 0;
 vehicle_config_t v_config;

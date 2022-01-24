@@ -80,19 +80,19 @@ void twistCMDCallback(const geometry_msgs::TwistStamped &msg)
     // printf("[ROS CMD] twist cmd, x:%f,z:%f\n", v_cmd.linear_x, v_cmd.angular_z);
 }
 
-void steerCMDCallback(const autoware_msgs::steer_cmd &steer)
+void steerCMDCallback(const autoware_msgs::SteerCmd &steer)
 {
     v_cmd.steering_angle = steer.steer;
     printf("[ROS CMD] steering_angle cmd: %d\n", v_cmd.steering_angle);
 }
 
-void accellCMDCallback(const autoware_msgs::accel_cmd &accell)
+void accellCMDCallback(const autoware_msgs::AccelCmd &accell)
 {
     v_cmd.accel_stroke = accell.accel;
     printf("[ROS CMD] accel_stroke cmd: %d\n", v_cmd.accel_stroke);
 }
 
-void brakeCMDCallback(const autoware_msgs::brake_cmd &brake)
+void brakeCMDCallback(const autoware_msgs::BrakeCmd &brake)
 {
     v_cmd.brake_stroke = brake.brake;
     printf("[ROS CMD] brake_stroke cmd: %d Time=%lld\n", v_cmd.brake_stroke, getTime());

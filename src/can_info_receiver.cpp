@@ -3,7 +3,7 @@
  *  All rights reserved.
  */
 
-#include <autoware_msgs/CanInfo.h>
+#include <autoware_can_msgs/CANInfo.h>
 #include <ros/ros.h>
 #include <tf/tf.h>
 
@@ -264,7 +264,7 @@ void IMU_callback(const sensor_msgs::ImuConstPtr &IMU_ptr) {}
 
 static void *publish_can_msg(void)
 {
-    autoware_msgs::CanInfo can_msg;
+    autoware_can_msgs::CANInfo can_msg;
 
     can_msg.header.frame_id = "/can";
     can_msg.header.stamp = ros::Time::now();

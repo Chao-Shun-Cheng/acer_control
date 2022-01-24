@@ -5,10 +5,12 @@ find_package(catkin REQUIRED COMPONENTS
   autoware_msgs
   roscpp
   std_msgs
+  tablet_socket_msgs
+  autoware_can_msgs
 )
 
 catkin_package(
-  CATKIN_DEPENDS autoware_msgs roscpp std_msgs
+  CATKIN_DEPENDS autoware_msgs roscpp std_msgs tablet_socket_msgs autoware_can_msgs
 )
 
 include_directories(
@@ -16,10 +18,10 @@ include_directories(
 )
 
 add_executable(acer_vehicle_control
-  nodes/acer_vehicle_control/main.cpp
-  nodes/acer_vehicle_control/can_cmd_sender.cpp
-  nodes/acer_vehicle_control/can_info_receiver.cpp
-  nodes/acer_vehicle_control/drv.cpp)
+  src/main.cpp
+  src/can_cmd_sender.cpp
+  src/can_info_receiver.cpp
+  src/drv.cpp)
 target_link_libraries(acer_vehicle_control ${catkin_LIBRARIES})
 if(EXISTS "/usr/include/canlib.h")
 target_link_libraries(acer_vehicle_control canlib)

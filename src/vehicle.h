@@ -11,9 +11,9 @@
 
 #include <signal.h>
 
-#include <autoware_msgs/accel_cmd.h>
-#include <autoware_msgs/brake_cmd.h>
-#include <autoware_msgs/steer_cmd.h>
+#include <autoware_msgs/AccelCmd.h>
+#include <autoware_msgs/BrakeCmd.h>
+#include <autoware_msgs/SteerCmd.h>
 #include <geometry_msgs/TwistStamped.h>
 #include <ros/ros.h>
 #include <sensor_msgs/Imu.h>
@@ -217,9 +217,9 @@ extern int willExit;
 void twistCMDCallback(const geometry_msgs::TwistStamped &msg);
 void modeCMDCallback(const tablet_socket_msgs::mode_cmd &mode);
 void gearCMDCallback(const tablet_socket_msgs::gear_cmd &gear);
-void accellCMDCallback(const autoware_msgs::accel_cmd &accell);
-void steerCMDCallback(const autoware_msgs::steer_cmd &steer);
-void brakeCMDCallback(const autoware_msgs::brake_cmd &brake);
+void accellCMDCallback(const autoware_msgs::AccelCmd &accell);
+void steerCMDCallback(const autoware_msgs::SteerCmd &steer);
+void brakeCMDCallback(const autoware_msgs::BrakeCmd &brake);
 void lidarSpeedcallback(const geometry_msgs::TwistStamped &msg);
 void RTK_Speedcallback(const geometry_msgs::TwistStamped &msg);
 void IMU_callback(const sensor_msgs::ImuConstPtr &IMU_ptr);
