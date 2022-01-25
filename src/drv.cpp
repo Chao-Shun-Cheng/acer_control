@@ -190,7 +190,7 @@ double _brake_stroke_pid_control(double current_velocity, double cmd_velocity)
             e = 0;
         }
 
-        e_d = e - e_prev;
+        //e_d = e - e_prev;
 
         brake_diff_array[brake_diff_index++] = e;
         brake_diff_index %= v_config._K_BRAKE_I_CYCLES;
