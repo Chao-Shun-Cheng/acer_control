@@ -3,7 +3,7 @@
  *  All rights reserved.
  */
 
-#include <autoware_msgs/CanInfo.h>
+#include <autoware_can_msgs/CANInfo.h>
 #include <jsk_recognition_msgs/BoundingBox.h>
 #include <jsk_recognition_msgs/BoundingBoxArray.h>
 #include <ros/ros.h>
@@ -150,7 +150,7 @@ int main(int argc, char **argv)
     else  // Acer Golf
         std::cout << "acer vehicle controller" << std::endl;
 
-    can_pub = nh.advertise<autoware_msgs::CanInfo>("can_info", 100);
+    can_pub = nh.advertise<autoware_can_msgs::CANInfo>("can_info", 100);
     mode_pub = nh.advertise<tablet_socket_msgs::mode_info>("mode_info", 100);
 
 
