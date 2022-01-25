@@ -18,6 +18,7 @@ vehicle_config:
   # km/hr
   SPEED_LIMIT: 45 # km/h
 
+  # PID ACCEL param
   _K_ACCEL_P_UNTIL20: 8.0 #20 4
   _K_ACCEL_I_UNTIL20: 0.07 #0.07
   _K_ACCEL_D_UNTIL20: 4.0
@@ -31,13 +32,18 @@ vehicle_config:
   _ACCEL_PEDAL_MAX: 255
   _ACCEL_PEDAL_OFFSET: 10
 
+  # PID BRAKE param
   _K_BRAKE_P: 2.0 #2.0
   _K_BRAKE_I: 0.15 # 0.15
   _K_BRAKE_D: 1.0 #1.0
   _K_BRAKE_I_CYCLES: 20
+
   _BRAKE_MAX_I: 1000 #1000
   _BRAKE_PEDAL_MAX: 65
   _BRAKE_PEDAL_STOPPING_MAX: 65
   _BRAKE_PEDAL_STOPPING_MED: 20 #35
   _BRAKE_PEDAL_OFFSET: 10
 
+  # anti wind-up and lpf
+  _T_sample: 0.01
+  _tau_lpf: 5.2

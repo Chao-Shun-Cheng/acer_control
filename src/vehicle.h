@@ -109,6 +109,10 @@ typedef struct vehicle_config {
     double _ACCEL_PEDAL_MAX;
     double _ACCEL_PEDAL_OFFSET;
 
+    // anti wand-up and lpf
+    double _T_sample;
+    double _tau_lpf;
+
     // brake
     double _K_BRAKE_P;
     double _K_BRAKE_I;
