@@ -100,6 +100,10 @@ int loading_vehicle_config()
     _nh.getParam("/vehicle_config/_K_BRAKE_I", v_config._K_BRAKE_I);
     _nh.getParam("/vehicle_config/_K_BRAKE_D", v_config._K_BRAKE_D);
 
+    // anti wind-up and lpf
+    _nh.getParam("/vehicle_config/_T_sample", v_config._T_sample);
+    _nh.getParam("/vehicle_config/_tau_lpf", v_config._tau_lpf);
+
     _nh.getParam("/vehicle_config/_K_BRAKE_I_CYCLES", v_config._K_BRAKE_I_CYCLES);
     if (v_config._K_BRAKE_I_CYCLES > MAX_K_BRAKE_I_CYCLES)
         v_config._K_BRAKE_I_CYCLES = MAX_K_BRAKE_I_CYCLES;

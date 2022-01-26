@@ -36,6 +36,10 @@ vehicle_config:
   _BRAKE_PEDAL_STOPPING_MED: 165
   _BRAKE_PEDAL_OFFSET: 10
 
+  # anti wind-up and lpf
+  _T_sample: 0.01
+  _tau_lpf: 5.2
+
   _FCW_X: 1.65
   _FCW_Y: -0.10
   _FRONT_L_X: 1.6
