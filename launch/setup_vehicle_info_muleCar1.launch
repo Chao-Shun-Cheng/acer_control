@@ -4,4 +4,5 @@
 
 <rosparam command="load" file="$(arg info_path)"/>
 
+<node pkg="acer_control" type="acer_vehicle_control" name="acer_vehicle_control" output="screen">
 </launch>
