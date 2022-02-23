@@ -55,7 +55,7 @@ double _accel_stroke_pid_control(double current_velocity, double cmd_velocity)
 
         // e_d = e - e_prev;
 
-        // anti wind-up
+        // anti wind-up process
         if ((accel_diff_sum == 0) && (current_velocity > 2))
             accel_diff_sum = cmd_velocity * v_config._K_ACCEL_I_GAIN;
 
