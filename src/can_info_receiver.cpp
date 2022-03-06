@@ -138,9 +138,9 @@ static bool parseCanValue(long id, unsigned char msg[], unsigned int dlc)
             // for the case: wheel encoder failed
             if (wheel_speed_sensor == 0)
                 v_info.velocity = ((float) motor_speed) / 10;  // offset /10
-                // long long int current_time = getTime();
-                // printf("[speed INFO] Time=%lld,lidar_velocity:%f, vehicle_velocity:%f\n",
-                //                   current_time, lidar_speed, v_info.velocity);
+                                                               // long long int current_time = getTime();
+                                                               // printf("[speed INFO] Time=%lld,lidar_velocity:%f, vehicle_velocity:%f\n",
+                                                               //                   current_time, lidar_speed, v_info.velocity);
 #endif
             // msg[4] is SOC(battery)
             v_info.SOC_battery = msg[4];

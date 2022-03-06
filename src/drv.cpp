@@ -79,8 +79,9 @@ double _accel_stroke_pid_control(double current_velocity, double cmd_velocity)
             // Integral Term
             integ += 0.5 * v_config._K_ACCEL_I_UNTIL20 * v_config._T_sample * e_i;
             // Derivative term with LPF
-            diff = (2.0 * v_config._K_ACCEL_D_UNTIL20 * (current_velocity - meas_prev) + (2.0 * v_config._tau_lpf - v_config._T_sample) * diff_prev) / (2.0 * v_config._tau_lpf + v_config._T_sample);
-            
+            diff = (2.0 * v_config._K_ACCEL_D_UNTIL20 * (current_velocity - meas_prev) + (2.0 * v_config._tau_lpf - v_config._T_sample) * diff_prev) /
+                   (2.0 * v_config._tau_lpf + v_config._T_sample);
+
             // target_accel_stroke =
             //     v_config._K_ACCEL_P_UNTIL20 * e + v_config._K_ACCEL_I_UNTIL20 * e_i + v_config._K_ACCEL_D_UNTIL20 * e_d + v_config._K_ACCEL_OFFSET;
         } else {
@@ -89,12 +90,13 @@ double _accel_stroke_pid_control(double current_velocity, double cmd_velocity)
             // Integral Term
             integ += 0.5 * v_config._K_ACCEL_I_UNTIL10 * v_config._T_sample * e_i;
             // Derivative term with LPF
-            diff = (2.0 * v_config._K_ACCEL_D_UNTIL10 * (current_velocity - meas_prev) + (2.0 * v_config._tau_lpf - v_config._T_sample) * diff_prev) / (2.0 * v_config._tau_lpf + v_config._T_sample);
+            diff = (2.0 * v_config._K_ACCEL_D_UNTIL10 * (current_velocity - meas_prev) + (2.0 * v_config._tau_lpf - v_config._T_sample) * diff_prev) /
+                   (2.0 * v_config._tau_lpf + v_config._T_sample);
 
             // target_accel_stroke =
             //     v_config._K_ACCEL_P_UNTIL10 * e + v_config._K_ACCEL_I_UNTIL10 * e_i + v_config._K_ACCEL_D_UNTIL10 * e_d + v_config._K_ACCEL_OFFSET;
         }
-       
+
         target_accel_stroke = prop + integ + diff + v_config._K_ACCEL_OFFSET;
 #else
         printf("accel_p = %lf, accel_i = %lf, accel_d = %lf\n", shm_ptr->accel.P, shm_ptr->accel.I, shm_ptr->accel.D);
@@ -173,7 +175,7 @@ double _brake_stroke_pid_control(double current_velocity, double cmd_velocity)
             e = 0;
         }
 
-        //e_d = e - e_prev;
+        // e_d = e - e_prev;
 
         brake_diff_array[brake_diff_index++] = e;
         brake_diff_index %= v_config._K_BRAKE_I_CYCLES;
@@ -194,8 +196,9 @@ double _brake_stroke_pid_control(double current_velocity, double cmd_velocity)
         // Integral Term
         integ += 0.5 * v_config._K_BRAKE_I * v_config._T_sample * e_i;
         // Derivative term with LPF
-        diff = (2.0 * v_config._K_BRAKE_D * (current_velocity - meas_prev) + (2.0 * v_config._tau_lpf - v_config._T_sample) * diff_prev) / (2.0 * v_config._tau_lpf + v_config._T_sample);
-        
+        diff = (2.0 * v_config._K_BRAKE_D * (current_velocity - meas_prev) + (2.0 * v_config._tau_lpf - v_config._T_sample) * diff_prev) /
+               (2.0 * v_config._tau_lpf + v_config._T_sample);
+
         // Anti-wind-up using Integrator Clamping
         if (v_config._BRAKE_PEDAL_MAX > prop)
             lim_max_integ = v_config._BRAKE_PEDAL_MAX - prop;
@@ -206,14 +209,14 @@ double _brake_stroke_pid_control(double current_velocity, double cmd_velocity)
             lim_max_integ = -prop;
         else
             lim_min_integ = 0.0;
-        
+
         // Constrain Integrator
         if (integ > lim_max_integ)
             integ = lim_max_integ;
 
         else if (integ < lim_min_integ)
             integ = lim_min_integ;
-        
+
         target_brake_stroke = prop + integ + diff;
 
         // target_brake_stroke = v_config._K_BRAKE_P * e + v_config._K_BRAKE_I * e_i + v_config._K_BRAKE_D * e_d;

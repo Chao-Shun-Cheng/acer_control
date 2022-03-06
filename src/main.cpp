@@ -155,31 +155,22 @@ int main(int argc, char **argv)
 
 
 #if 0
-   // lidar vel.
-   ros::Subscriber lidar_vel_subcscriber;
-   lidar_vel_subcscriber = nh.subscribe(
-            "estimate_twist", 10,
-            lidarSpeedcallback);
-   // RTK vel.
-   ros::Subscriber RTK_vel_subcscriber;
-   RTK_vel_subcscriber = nh.subscribe(
-            "vel", 1,
-             RTK_Speedcallback);
-#endif
-
+    // lidar vel.
+    ros::Subscriber lidar_vel_subcscriber;
+    lidar_vel_subcscriber = nh.subscribe("estimate_twist", 10, lidarSpeedcallback);
+    // RTK vel.
+    ros::Subscriber RTK_vel_subcscriber;
+    RTK_vel_subcscriber = nh.subscribe("vel", 1, RTK_Speedcallback);
     // IMU data.
     ros::Subscriber IMU_subcscriber;
     IMU_subcscriber = nh.subscribe("/imu/data", 5, IMU_callback);
-
     // RTK pose.
-    /*
-     ros::Subscriber RTK_pose_subcscriber;
-     RTK_pose_subcscriber = nh.subscribe(
-              "gnss_pose", 1,
-               RTK_Pose_callback);
-     */
+    ros::Subscriber RTK_pose_subcscriber;
+    RTK_pose_subcscriber = nh.subscribe("gnss_pose", 1, RTK_Pose_callback);
+    // NDT pose.
     ros::Subscriber Current_pose_subcscriber;
     Current_pose_subcscriber = nh.subscribe("/current_pose", 1, Current_Pose_callback);
+#endif
 
     int ret;
 
@@ -197,14 +188,12 @@ int main(int argc, char **argv)
         std::exit(1);
     }
 
-    // ret = pthread_join(vehicle_info_thread, NULL);
+    // use detach to release resources when thread terminates
     ret = pthread_detach(vehicle_info_thread);
     if (ret != 0) {
         std::perror("pthread_detach");
         std::exit(1);
     }
-
-    // ret = pthread_join(vehicle_cmd_thread, NULL);
     ret = pthread_detach(vehicle_cmd_thread);
     if (ret != 0) {
         std::perror("pthread_detach");
