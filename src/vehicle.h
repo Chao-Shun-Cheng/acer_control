@@ -1,3 +1,4 @@
+#include <autoware_can_msgs/CANInfo.h>
 #include <geometry_msgs/PoseStamped.h>
 #include <geometry_msgs/TwistStamped.h>
 #include <ros/ros.h>

@@ -3,6 +3,7 @@
  *  All rights reserved.
  */
 
+#include <autoware_can_msgs/CANInfo.h>
 #include <ros/ros.h>
 
 // CAN_DEV_ID_SOCKETCAN
