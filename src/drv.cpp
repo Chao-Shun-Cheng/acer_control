@@ -55,6 +55,7 @@ double _accel_stroke_pid_control(double current_velocity, double cmd_velocity)
 
         // e_d = e - e_prev;
 
+        // anti wind-up process
         if ((accel_diff_sum == 0) && (current_velocity > 2))
             accel_diff_sum = cmd_velocity * v_config._K_ACCEL_I_GAIN;
 
@@ -93,25 +94,7 @@ double _accel_stroke_pid_control(double current_velocity, double cmd_velocity)
             // target_accel_stroke =
             //     v_config._K_ACCEL_P_UNTIL10 * e + v_config._K_ACCEL_I_UNTIL10 * e_i + v_config._K_ACCEL_D_UNTIL10 * e_d + v_config._K_ACCEL_OFFSET;
         }
-
-        // Anti-wind-up using Integrator Clamping
-        if (v_config._ACCEL_PEDAL_MAX > prop)
-            lim_max_integ = v_config._ACCEL_PEDAL_MAX - prop;
-        else
-            lim_max_integ = 0.0;
-
-        if (v_config._K_ACCEL_OFFSET < prop)
-            lim_max_integ = v_config._K_ACCEL_OFFSET - prop;
-        else
-            lim_min_integ = 0.0;
-        
-        // Constrain Integrator
-        if (integ > lim_max_integ)
-            integ = lim_max_integ;
-
-        else if (integ < lim_min_integ)
-            integ = lim_min_integ;
-        
+       
         target_accel_stroke = prop + integ + diff + v_config._K_ACCEL_OFFSET;
 #else
         printf("accel_p = %lf, accel_i = %lf, accel_d = %lf\n", shm_ptr->accel.P, shm_ptr->accel.I, shm_ptr->accel.D);

@@ -45,5 +45,5 @@ vehicle_config:
   _BRAKE_PEDAL_OFFSET: 10
 
   # anti wind-up and lpf
-  _T_sample: 0.01
-  _tau_lpf: 5.2
+  _T_sample: 0.5
+  _tau_lpf: 15.0
