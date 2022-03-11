@@ -230,7 +230,7 @@ static bool parseCanValue(long id, unsigned char msg[], unsigned int dlc)
         std::cout << "Warning: recv unknown CAN ID : " << id << std::endl;
         return false;
     }
-
+    v_info.velocity *= 2.6;
     return true;
 }
 
