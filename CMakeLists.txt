@@ -7,10 +7,11 @@ find_package(catkin REQUIRED COMPONENTS
   std_msgs
   tablet_socket_msgs
   autoware_can_msgs
+  tf
 )
 
 catkin_package(
-  CATKIN_DEPENDS autoware_msgs roscpp std_msgs tablet_socket_msgs autoware_can_msgs
+  CATKIN_DEPENDS autoware_msgs roscpp std_msgs tablet_socket_msgs autoware_can_msgs tf
 )
 
 include_directories(
@@ -22,6 +23,9 @@ add_executable(acer_vehicle_control
   src/can_cmd_sender.cpp
   src/can_info_receiver.cpp
   src/drv.cpp)
+
+add_executable(acer_front_position src/front_position.cpp)
+target_link_libraries(acer_front_position ${catkin_LIBRARIES})
 target_link_libraries(acer_vehicle_control ${catkin_LIBRARIES})
 if(EXISTS "/usr/include/canlib.h")
 target_link_libraries(acer_vehicle_control canlib)
