@@ -6,6 +6,9 @@
 
 #include "vehicle.h"
 
+extern ros::Publisher error_spacing_pub;
+std_msgs::Float32 spacing;
+
 static double accel_diff_sum_vc = 0;
 static double accel_diff_sum_sc = 0;
 static double brake_diff_sum_vc = 0;
@@ -523,9 +526,12 @@ void PedalControl(double current_velocity, double cmd_velocity, double current_s
 
     double cmd_spacing = 5.0 + (0.8 * (current_velocity * 2.6));
     double error_spacing = cmd_spacing - current_spacing;
+    spacing.data = error_spacing;
+    error_spacing_pub.publish(spacing);
+    
     if (cmd_velocity > v_config.SPEED_LIMIT)
         cmd_velocity = v_config.SPEED_LIMIT;
-
+    cout << "-----------------------" << endl;
     if ((cmd_velocity == 0.0 && current_velocity != 0.0) || (leading_velocity <= 1.5 && error_spacing > 1.0) ) {
         cout << RED << "stop: current_velocity=" << current_velocity << ", cmd_velocity=" << cmd_velocity << "current_spacing=" << current_spacing << ", cmd_spacing=" << cmd_spacing << ", pred_out=" << pred_out << RESET << endl;
         if ((current_velocity * 2.6) < 4.0) {  // nearly stopping
@@ -547,7 +553,7 @@ void PedalControl(double current_velocity, double cmd_velocity, double current_s
             }
         }
     } else if ((fabs(cmd_velocity) + (1.5/2.6)) >= current_velocity && (cmd_velocity != 0.0)) {
-        cout << GREEN << "accelerate: current_velocity=" << current_velocity << ", pred_out=" << pred_out << ", error_spacing=" << error_spacing << RESET << endl;
+        cout << GREEN << "accelerate: current_velocity=" << current_velocity << ", cmd_velocity=" << cmd_velocity << "current_spacing=" << current_spacing << ", cmd_spacing=" << cmd_spacing << ", pred_out=" << pred_out << RESET << endl;
 
         accel_stroke = _accel_stroke_pid_control(current_velocity, fabs(cmd_velocity), cmd_spacing, current_spacing, pred_out);
         if (accel_stroke > 0) {
@@ -561,7 +567,7 @@ void PedalControl(double current_velocity, double cmd_velocity, double current_s
             set_brake_stroke(-accel_stroke);
         }
     } else if ((fabs(cmd_velocity) + (1.5/2.6)) < current_velocity && fabs(cmd_velocity) > 0.0) {
-        cout << YELLOW << "decelerate: current_velocity=" << current_velocity << ", pred_out=" << pred_out << ", error_spacing=" << error_spacing << RESET << endl;
+        cout << YELLOW << "decelerate: current_velocity=" << current_velocity << ", cmd_velocity=" << cmd_velocity << "current_spacing=" << current_spacing << ", cmd_spacing=" << cmd_spacing << ", pred_out=" << pred_out << RESET << endl;
         brake_stroke = _brake_stroke_pid_control(current_velocity, fabs(cmd_velocity), cmd_spacing, current_spacing, pred_out);
         cout << "brake_stroke===" << brake_stroke << ")" << endl;
         if (brake_stroke > 0) {

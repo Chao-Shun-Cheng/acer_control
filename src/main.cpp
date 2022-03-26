@@ -24,6 +24,7 @@
 
 
 ros::Publisher can_pub;
+ros::Publisher error_spacing_pub;
 ros::Publisher mode_pub;
 ros::Publisher obj_pose_pub;
 
@@ -155,6 +156,7 @@ int main(int argc, char **argv)
 
     can_pub = nh.advertise<autoware_can_msgs::CANInfo>("can_info", 100);
     mode_pub = nh.advertise<tablet_socket_msgs::mode_info>("mode_info", 100);
+    error_spacing_pub = nh.advertise<std_msgs::Float32>("error_spacing", 100);
 
 
 #if 0

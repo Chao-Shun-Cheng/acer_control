@@ -66,13 +66,13 @@ void modeCMDCallback(const tablet_socket_msgs::mode_cmd &mode)
     }
 
     v_cmd.modeValue = mode.mode;
-    printf("[ROS CMD] mode cmd: %d\n", v_cmd.modeValue);
+    // printf("[ROS CMD] mode cmd: %d\n", v_cmd.modeValue);
 }
 
 void gearCMDCallback(const tablet_socket_msgs::gear_cmd &gear)
 {
     v_cmd.shift = gear.gear;
-    printf("[ROS CMD] gear cmd: %d\n", v_cmd.shift);
+    // printf("[ROS CMD] gear cmd: %d\n", v_cmd.shift);
 }
 
 void twistCMDCallback(const geometry_msgs::TwistStamped &msg)
@@ -85,41 +85,41 @@ void twistCMDCallback(const geometry_msgs::TwistStamped &msg)
 void steerCMDCallback(const autoware_msgs::SteerCmd &steer)
 {
     v_cmd.steering_angle = steer.steer;
-    printf("[ROS CMD] steering_angle cmd: %d\n", v_cmd.steering_angle);
+    // printf("[ROS CMD] steering_angle cmd: %d\n", v_cmd.steering_angle);
 }
 
 void accellCMDCallback(const autoware_msgs::AccelCmd &accell)
 {
     v_cmd.accel_stroke = accell.accel;
-    printf("[ROS CMD] accel_stroke cmd: %d\n", v_cmd.accel_stroke);
+    // printf("[ROS CMD] accel_stroke cmd: %d\n", v_cmd.accel_stroke);
 }
 
 void brakeCMDCallback(const autoware_msgs::BrakeCmd &brake)
 {
     v_cmd.brake_stroke = brake.brake;
-    printf("[ROS CMD] brake_stroke cmd: %d Time=%lld\n", v_cmd.brake_stroke, getTime());
+    // printf("[ROS CMD] brake_stroke cmd: %d Time=%lld\n", v_cmd.brake_stroke, getTime());
 }
 
-void pedalCMDCallback(const std_msgs::Float64 &leading_pedal)
+void pedalCMDCallback(const std_msgs::Float32 &leading_pedal)
 {
     v_cmd.leading_pedal = leading_pedal.data;
-    printf("[ROS CMD] leading_pedal : %lf Time=%lld\n", v_cmd.leading_pedal, getTime());
+    // printf("[ROS CMD] leading_pedal : %lf Time=%lld\n", v_cmd.leading_pedal, getTime());
 }
 
-void velCMDCallback(const std_msgs::Float64 &leading_velocity)
+void velCMDCallback(const std_msgs::Float32 &leading_velocity)
 {
     v_cmd.leading_velocity = leading_velocity.data;
-    printf("[ROS CMD] leading_pedal : %lf Time=%lld\n", v_cmd.leading_velocity, getTime());
+    // printf("[ROS CMD] leading_pedal : %lf Time=%lld\n", v_cmd.leading_velocity, getTime());
 }
 
-void distCMDCallback(const std_msgs::Float64 &leading_distance)
+void distCMDCallback(const std_msgs::Float32 &leading_distance)
 {
     if (leading_distance.data == 0)
         v_cmd.leading_distance = 150.0;
     else
-        v_cmd.leading_distance = leading_distance.data - 3.03;
+        v_cmd.leading_distance = leading_distance.data;
     
-    printf("[ROS CMD] leading_distance : %lf Time=%lld\n", v_cmd.leading_distance, getTime());
+    // printf("[ROS CMD] leading_distance : %lf Time=%lld\n", v_cmd.leading_distance, getTime());
 }
 
 static bool auto_setVehicleGear(void)

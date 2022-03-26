@@ -19,7 +19,7 @@
 #include <sensor_msgs/Imu.h>
 #include <tablet_socket_msgs/gear_cmd.h>
 #include <tablet_socket_msgs/mode_cmd.h>
-#include <std_msgs/Float64.h>
+#include <std_msgs/Float32.h>
 
 #include <netinet/in.h>
 #include <pthread.h>
@@ -237,9 +237,9 @@ void gearCMDCallback(const tablet_socket_msgs::gear_cmd &gear);
 void accellCMDCallback(const autoware_msgs::AccelCmd &accell);
 void steerCMDCallback(const autoware_msgs::SteerCmd &steer);
 void brakeCMDCallback(const autoware_msgs::BrakeCmd &brake);
-void pedalCMDCallback(const std_msgs::Float64 &leading_pedal);
-void distCMDCallback(const std_msgs::Float64 &leading_distance);
-void velCMDCallback(const std_msgs::Float64 &leading_velocity);
+void pedalCMDCallback(const std_msgs::Float32 &leading_pedal);
+void distCMDCallback(const std_msgs::Float32 &leading_distance);
+void velCMDCallback(const std_msgs::Float32 &leading_velocity);
 void lidarSpeedcallback(const geometry_msgs::TwistStamped &msg);
 void RTK_Speedcallback(const geometry_msgs::TwistStamped &msg);
 void IMU_callback(const sensor_msgs::ImuConstPtr &IMU_ptr);
