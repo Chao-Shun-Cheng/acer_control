@@ -55,6 +55,8 @@ void cmd_reset()
     v_cmd.brake_stroke = 0;
     v_cmd.steering_angle = 0;
     v_cmd.light = 0;
+    v_cmd.leading_distance = 150;
+    v_cmd.leading_pedal = 0;
 }
 
 void modeCMDCallback(const tablet_socket_msgs::mode_cmd &mode)
@@ -98,6 +100,28 @@ void brakeCMDCallback(const autoware_msgs::BrakeCmd &brake)
     printf("[ROS CMD] brake_stroke cmd: %d Time=%lld\n", v_cmd.brake_stroke, getTime());
 }
 
+void pedalCMDCallback(const std_msgs::Float64 &leading_pedal)
+{
+    v_cmd.leading_pedal = leading_pedal.data;
+    printf("[ROS CMD] leading_pedal : %lf Time=%lld\n", v_cmd.leading_pedal, getTime());
+}
+
+void velCMDCallback(const std_msgs::Float64 &leading_velocity)
+{
+    v_cmd.leading_velocity = leading_velocity.data;
+    printf("[ROS CMD] leading_pedal : %lf Time=%lld\n", v_cmd.leading_velocity, getTime());
+}
+
+void distCMDCallback(const std_msgs::Float64 &leading_distance)
+{
+    if (leading_distance.data == 0)
+        v_cmd.leading_distance = 150.0;
+    else
+        v_cmd.leading_distance = leading_distance.data - 3.03;
+    
+    printf("[ROS CMD] leading_distance : %lf Time=%lld\n", v_cmd.leading_distance, getTime());
+}
+
 static bool auto_setVehicleGear(void)
 {
     static bool change_gear_flag = false;
@@ -122,7 +146,7 @@ static bool auto_setVehicleGear(void)
             cmd_speed = current_speed / 2;
         else
             cmd_speed = 0.0;
-        PedalControl(current_speed, cmd_speed);
+        PedalControl(current_speed, cmd_speed, v_cmd.leading_distance, v_cmd.leading_pedal, v_cmd.leading_velocity);
     }
 
     if (change_gear_flag) {
@@ -229,11 +253,12 @@ static void setVehicleDrv_control()
     }
 
 
-    PedalControl((double) current_velocity, (double) cmd_velocity);
+    PedalControl((double) current_velocity, (double) cmd_velocity, v_cmd.leading_distance, v_cmd.leading_pedal, v_cmd.leading_velocity);
 
     SteeringControl(cmd_steering_angle);
 
-    printf("cmd_velocity=%f, cmd_steering_angle=%f\n", cmd_velocity, cmd_steering_angle);
+    printf("cmd_velocity=%f, cmd_steering_angle=%f, leading_distance=%f, leading_pedal=%f\n",
+            cmd_velocity, cmd_steering_angle, (float) v_cmd.leading_distance, (float) v_cmd.leading_pedal);
 }
 
 static void setDirect_control(void)

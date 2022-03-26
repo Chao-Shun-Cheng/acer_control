@@ -230,7 +230,7 @@ static bool parseCanValue(long id, unsigned char msg[], unsigned int dlc)
         std::cout << "Warning: recv unknown CAN ID : " << id << std::endl;
         return false;
     }
-    v_info.velocity *= 2.6;
+    // v_info.velocity *= 2.6;
     return true;
 }
 
@@ -271,7 +271,7 @@ static void *publish_can_msg(void)
     can_msg.brakepedal = v_info.brake_stroke;
     can_msg.angle = v_info.steering_angle;
     can_msg.torque = v_info.steering_torque;
-    can_msg.speed = v_info.velocity;
+    can_msg.speed = v_info.velocity * 2.6;
     can_msg.drivepedal = v_info.accel_stroke;
     can_msg.driveshift = v_info.shift;
     can_pub.publish(can_msg);
@@ -417,7 +417,7 @@ void *canReceiver(void *unused)
                 "           steering_torque=%f, steering_angle:%f, velocity:%f,\n"
                 "           battery=%d, vcu control_mode: %d, shift:%d \n",
                 current_time, v_info.drv_op_info, v_info.accel_stroke, v_info.brake_stroke, v_info.steering_torque, v_info.steering_angle,
-                v_info.velocity, v_info.SOC_battery, v_info.control_mode, v_info.shift);
+                v_info.velocity * 2.6, v_info.SOC_battery, v_info.control_mode, v_info.shift);
 #endif
             last_print_time = current_time;
             update_print = false;

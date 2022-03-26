@@ -6,29 +6,31 @@
 
 #include "vehicle.h"
 
-static double accel_diff_sum = 0;
-static double brake_diff_sum = 0;
+static double accel_diff_sum_vc = 0;
+static double accel_diff_sum_sc = 0;
+static double brake_diff_sum_vc = 0;
+static double brake_diff_sum_sc = 0;
 double cycle_time = 0.0;
 
 
 static void clear_diff()
 {
-    accel_diff_sum = 0;
-    brake_diff_sum = 0;
+    accel_diff_sum_vc = 0;
+    accel_diff_sum_sc = 0;
+    brake_diff_sum_vc = 0;
+    brake_diff_sum_sc = 0;
 }
 
 
-double _accel_stroke_pid_control(double current_velocity, double cmd_velocity)
+double _accel_stroke_pid_control(double current_velocity, double cmd_velocity, double cmd_spacing, double current_spacing, double pred_out)
 {
-    double e;
-    static double e_prev = 0;
-    double e_i;
-    double e_d;
+    double e, e_vc, e_sc;
+    static double e_prev_vc = 0.0;
+    static double e_prev_sc = 0.0;
+    static double e_prev = 0.0;
+    double e_i, e_i_vc, e_i_sc;
+    double e_d, e_d_vc, e_d_sc;
     double ret;
-    static double meas_prev = 0.0;
-    static double diff_prev = 0.0;
-    double prop, integ, diff;
-    double lim_max_integ, lim_min_integ;
 
     // acclerate by releasing the brake pedal if pressed.
     if (v_info.brake_stroke > v_config._BRAKE_PEDAL_OFFSET || v_info.control_mode != 1 /*auto pilot mode*/) {
@@ -44,63 +46,163 @@ double _accel_stroke_pid_control(double current_velocity, double cmd_velocity)
         ret = 0;
 
         /* reset PID variables. */
-        e_prev = 0.0;
-        meas_prev = 0.0;
-        diff_prev = 0.0;
+        e_prev_vc = 0;
+        e_prev_sc = 0;
+        e_prev = 0;
         clear_diff();
     } else {  // PID control
         double target_accel_stroke;
 
-        e = cmd_velocity - current_velocity;
+        // true: active ; false: do Not active
+        bool cacc_mode = true;
 
-        // e_d = e - e_prev;
+        // ################# Velocity Controller #################
+        // Error current velocity
+        e_vc = cmd_velocity - current_velocity;
+        // Error derivative velocity
+        e_d_vc = e_vc - e_prev_vc;
+        // Error Integrator velocity
+        if ((accel_diff_sum_vc == 0) && (current_velocity > 2))
+            accel_diff_sum_vc = cmd_velocity * v_config._K_ACCEL_I_GAIN;
+        if (e_vc >= 0.75)
+            accel_diff_sum_vc += e_vc;
+        else if (e_vc <= 0.0)
+            accel_diff_sum_vc += 1.5 * e_vc;
 
-        // anti wind-up process
-        if ((accel_diff_sum == 0) && (current_velocity > 2))
-            accel_diff_sum = cmd_velocity * v_config._K_ACCEL_I_GAIN;
-
-        // if (fabs(e) >= 0.75)
-        if (e >= 0.75)
-            accel_diff_sum += e;
-        else if (e <= 0.0)
-            accel_diff_sum += 1.5 * e;
-
-        if (accel_diff_sum > v_config._ACCEL_MAX_I) {
-            e_i = v_config._ACCEL_MAX_I;
+        if (accel_diff_sum_vc > v_config._ACCEL_MAX_I) {
+            e_i_vc = v_config._ACCEL_MAX_I;
         } else {
-            e_i = accel_diff_sum;
+            e_i_vc = accel_diff_sum_vc;
         }
+
+        // Velocity PID action
+        double Prop_vc = v_config._K_ACCEL_P_UNTIL10 * e_vc;
+        double Integ_vc = v_config._K_ACCEL_I_UNTIL10 * e_i_vc;
+        double Diff_vc = v_config._K_ACCEL_D_UNTIL10 * e_d_vc;
+
+        double PID_vc = Prop_vc + Integ_vc + Diff_vc;
+
+        e_prev_vc = e_vc;
+
+        // ################# Spacing Controller #################
+        // Error current spacing
+        e_sc = cmd_spacing - current_spacing;
+        // Error derivative spacing
+        e_d_sc = e_sc - e_prev_sc;
+        // Error Integrator spacing
+        if ((accel_diff_sum_sc == 0) && (current_spacing > 2))
+            accel_diff_sum_sc = cmd_spacing * v_config._K_ACCEL_I_GAIN;
+        if (e_sc >= 0.75)
+            accel_diff_sum_sc += e_sc;
+        else if (e_sc <= 0.0)
+            accel_diff_sum_sc += 1.5 * e_sc;
+
+        if (accel_diff_sum_sc > v_config._ACCEL_MAX_I) {
+            e_i_sc = v_config._ACCEL_MAX_I;
+        } else {
+            e_i_sc = accel_diff_sum_sc;
+        }
+
+        // Spacing PID action
+        if (-e_sc >= 50.0)
+        {
+            e_sc = -50;
+        }
+            
+        double Prop_sc = -v_config._K_ACCEL_P_UNTIL10 * e_sc;
+        double Integ_sc = -v_config._K_ACCEL_I_UNTIL10 * e_i_sc;
+        double Diff_sc = -v_config._K_ACCEL_D_UNTIL10 * e_d_sc;
+
+        double PID_sc = Prop_sc + Integ_sc + Diff_sc;
+
+        e_prev_sc = e_sc;
+
+        // ################# Determine the Mode #################
+        double lim_max_integ = 0.0;
+        double lim_min_integ = 0.0;
+        if (PID_sc <= PID_vc)
+        { // Spacing Controller
+
+            // Anti-wind-up via Dynamic Integrator Clamping Spacing
+            if (v_config._ACCEL_PEDAL_MAX > Prop_sc)
+                lim_max_integ = v_config._ACCEL_PEDAL_MAX - Prop_sc;
+            else
+                lim_max_integ = 0.0;
+
+            if (v_config._K_ACCEL_OFFSET < Prop_sc)
+                lim_min_integ = v_config._K_ACCEL_OFFSET - Prop_sc;
+            else
+                lim_min_integ = 0.0;
+            
+            // Constraint Integrator Spacing
+            if (Integ_sc > lim_max_integ)
+                Integ_sc = lim_max_integ;
+            else if (Integ_sc < lim_min_integ)
+                Integ_sc = lim_min_integ;
+
+            target_accel_stroke = Prop_sc + Integ_sc + Diff_sc;// + v_config._K_ACCEL_OFFSET;
+
+            if ((current_velocity * 2.6) < 1.0)
+            {
+                e_i_sc = 0.0;
+                accel_diff_sum_sc = 0.0;
+                e_prev_sc = 0.0;
+            }
+
+            // Clear other mode values
+            accel_diff_sum_vc = 0;
+            e_prev_vc = 0;
+        }
+        else
+        { // Velocity Controller
+
+            // Anti-wind-up via Dynamic Integrator Clamping Velocity
+            if (v_config._ACCEL_PEDAL_MAX > Prop_vc)
+                lim_max_integ = v_config._ACCEL_PEDAL_MAX - Prop_vc;
+            else
+                lim_max_integ = 0.0;
+
+            if (v_config._K_ACCEL_OFFSET < Prop_vc)
+                lim_min_integ = v_config._K_ACCEL_OFFSET - Prop_vc;
+            else
+                lim_min_integ = 0.0;
+            
+            // Constraint Integrator Velocity
+            if (Integ_vc > lim_max_integ)
+                Integ_vc = lim_max_integ;
+            else if (Integ_vc < lim_min_integ)
+                Integ_vc = lim_min_integ;
+
+            target_accel_stroke = Prop_vc + Integ_vc + Diff_vc + v_config._K_ACCEL_OFFSET;
+
+            // Clear other mode values
+            accel_diff_sum_sc = 0;
+            e_prev_sc = 0;
+        }     
+
+        // CACC Mode
+        if (cacc_mode)
+        {
+            target_accel_stroke += pred_out;
+        }
+        
+
+        // // if (fabs(e) >= 0.75)
+        
 
 #if 1
         // target_accel_stroke = _K_ACCEL_P * e + _K_ACCEL_I * e_i + _K_ACCEL_D * e_d;
-        if (cmd_velocity > 10 /***10**20160905***/) {
-            // Proportional Term
-            prop = v_config._K_ACCEL_P_UNTIL20 * e;
-            // Integral Term
-            integ += 0.5 * v_config._K_ACCEL_I_UNTIL20 * v_config._T_sample * e_i;
-            // Derivative term with LPF
-            diff = (2.0 * v_config._K_ACCEL_D_UNTIL20 * (current_velocity - meas_prev) + (2.0 * v_config._tau_lpf - v_config._T_sample) * diff_prev) /
-                   (2.0 * v_config._tau_lpf + v_config._T_sample);
-
-            // target_accel_stroke =
-            //     v_config._K_ACCEL_P_UNTIL20 * e + v_config._K_ACCEL_I_UNTIL20 * e_i + v_config._K_ACCEL_D_UNTIL20 * e_d + v_config._K_ACCEL_OFFSET;
-        } else {
-            // Proportional Term
-            prop = v_config._K_ACCEL_P_UNTIL10 * e;
-            // Integral Term
-            integ += 0.5 * v_config._K_ACCEL_I_UNTIL10 * v_config._T_sample * e_i;
-            // Derivative term with LPF
-            diff = (2.0 * v_config._K_ACCEL_D_UNTIL10 * (current_velocity - meas_prev) + (2.0 * v_config._tau_lpf - v_config._T_sample) * diff_prev) /
-                   (2.0 * v_config._tau_lpf + v_config._T_sample);
-
-            // target_accel_stroke =
-            //     v_config._K_ACCEL_P_UNTIL10 * e + v_config._K_ACCEL_I_UNTIL10 * e_i + v_config._K_ACCEL_D_UNTIL10 * e_d + v_config._K_ACCEL_OFFSET;
-        }
-
-        target_accel_stroke = prop + integ + diff + v_config._K_ACCEL_OFFSET;
+        // if (cmd_velocity > 10 /***10**20160905***/) {
+        //     target_accel_stroke =
+        //         v_config._K_ACCEL_P_UNTIL20 * e_vc + v_config._K_ACCEL_I_UNTIL20 * e_i_vc + v_config._K_ACCEL_D_UNTIL20 * e_d_vc + v_config._K_ACCEL_OFFSET;
+        // } else {
+        //     target_accel_stroke =
+        //         v_config._K_ACCEL_P_UNTIL10 * e_vc + v_config._K_ACCEL_I_UNTIL10 * e_i_vc + v_config._K_ACCEL_D_UNTIL10 * e_d_vc + v_config._K_ACCEL_OFFSET;
+        // }
+        
 #else
         printf("accel_p = %lf, accel_i = %lf, accel_d = %lf\n", shm_ptr->accel.P, shm_ptr->accel.I, shm_ptr->accel.D);
-        target_accel_stroke = shm_ptr->accel.P * e + shm_ptr->accel.I * e_i + shm_ptr->accel.D * e_d;
+        target_accel_stroke = shm_ptr->accel.P * e_vc + shm_ptr->accel.I * e_i_vc + shm_ptr->accel.D * e_d_vc;
 #endif
 
         if (target_accel_stroke > v_config._ACCEL_PEDAL_MAX) {
@@ -117,15 +219,12 @@ double _accel_stroke_pid_control(double current_velocity, double cmd_velocity)
         // cout << "e_d = " << e_d << endl;
 
         ret = target_accel_stroke;
-        // Store for Later Use
-        meas_prev = current_velocity;
-        diff_prev = diff;
-        e_prev = e;
+        
 
 #if 1 /* log */
         // ofstream ofs("/tmp/drv_accel.log", ios::app);
         ofstream ofs("/tmp/drv.log", ios::app);
-        ofs << "accel:" << cmd_velocity << " " << current_velocity << " " << e << " " << e_i << " " << e_d << " " << target_accel_stroke << " "
+        ofs << "accel:" << cmd_velocity << " " << current_velocity << " " << e_vc << " " << e_i_vc << " " << e_d_vc << " " << target_accel_stroke << " "
             << endl;
 #endif
     }
@@ -134,21 +233,20 @@ double _accel_stroke_pid_control(double current_velocity, double cmd_velocity)
 }
 
 
-double _brake_stroke_pid_control(double current_velocity, double cmd_velocity)
+double _brake_stroke_pid_control(double current_velocity, double cmd_velocity, double cmd_spacing, double current_spacing, double pred_out)
 {
-    double e;
+    double e, e_vc, e_sc;
+    static double e_prev_vc = 0;
+    static double e_prev_sc = 0;
     static double e_prev = 0;
-    static int brake_diff_index = 0;
+    static int brake_diff_index_vc = 0;
+    static int brake_diff_index_sc = 0;
 
-    static double brake_diff_array[MAX_K_BRAKE_I_CYCLES] = {0};
-    double e_i;
-    double e_d;
+    static double brake_diff_array_vc[MAX_K_BRAKE_I_CYCLES] = {0};
+    static double brake_diff_array_sc[MAX_K_BRAKE_I_CYCLES] = {0};
+    double e_i, e_i_vc, e_i_sc;
+    double e_d, e_d_vc, e_d_sc;
     double ret;
-
-    static double meas_prev = 0.0;
-    static double diff_prev = 0.0;
-    double prop, integ, diff;
-    double lim_max_integ, lim_min_integ;
 
     // decelerate by releasing the accel pedal if pressed.
     if (v_info.accel_stroke > v_config._ACCEL_PEDAL_OFFSET) {
@@ -157,70 +255,166 @@ double _brake_stroke_pid_control(double current_velocity, double cmd_velocity)
         ret = 0;
 
         /* reset PID variables. */
-        e_prev = 0.0;
-        meas_prev = 0.0;
-        diff_prev = 0.0;
+        e_prev_vc = 0;
+        e_prev_sc = 0;
+        e_prev = 0;
 
-        for (brake_diff_index = 0; brake_diff_index < v_config._K_BRAKE_I_CYCLES; brake_diff_index++) {
-            brake_diff_array[brake_diff_index] = 0;
+        for (brake_diff_index_vc = 0; brake_diff_index_vc < v_config._K_BRAKE_I_CYCLES; brake_diff_index_vc++) {
+            brake_diff_array_vc[brake_diff_index_vc] = 0;
         }
-        brake_diff_index = 0;
+        brake_diff_index_vc = 0;
+
+        for (brake_diff_index_sc = 0; brake_diff_index_sc < v_config._K_BRAKE_I_CYCLES; brake_diff_index_sc++) {
+            brake_diff_array_sc[brake_diff_index_sc] = 0;
+        }
+        brake_diff_index_sc = 0;
+        
         clear_diff();
     } else {  // PID control
         double target_brake_stroke;
 
+        // true: active; false: do Not active
+        bool cacc_mode = true;
+
+        // ################# Velocity Controller #################
+        // Error current velocity
         // since this is braking, multiply -1.
-        e = -1 * (cmd_velocity - current_velocity);
-        if (e > 0 && e <= 1) {  // added @ 2016/Aug/29
-            e = 0;
+        e_vc = -1 * (cmd_velocity - current_velocity);
+        if (e_vc > 0 && e_vc <= 1) {  // added @ 2016/Aug/29
+            e_vc = 0;
         }
-
-        // e_d = e - e_prev;
-
-        brake_diff_array[brake_diff_index++] = e;
-        brake_diff_index %= v_config._K_BRAKE_I_CYCLES;
-        brake_diff_sum = 0;
+        // Error Derivative velocity
+        e_d_vc = e_vc - e_prev_vc;
+        // Error Integrator velocity
+        brake_diff_array_vc[brake_diff_index_vc++] = e_vc;
+        brake_diff_index_vc %= v_config._K_BRAKE_I_CYCLES;
+        brake_diff_sum_vc = 0;
         for (int i = 0; i < v_config._K_BRAKE_I_CYCLES; i++) {
-            brake_diff_sum += brake_diff_array[i];
+            brake_diff_sum_vc += brake_diff_array_vc[i];
         }
-
-
-        if (brake_diff_sum > v_config._BRAKE_MAX_I) {
-            e_i = v_config._BRAKE_MAX_I;
+        if (brake_diff_sum_vc > v_config._BRAKE_MAX_I) {
+            e_i_vc = v_config._BRAKE_MAX_I;
         } else {
-            e_i = brake_diff_sum;
+            e_i_vc = brake_diff_sum_vc;
         }
 
-        // Proportional Term
-        prop = v_config._K_BRAKE_P * e;
-        // Integral Term
-        integ += 0.5 * v_config._K_BRAKE_I * v_config._T_sample * e_i;
-        // Derivative term with LPF
-        diff = (2.0 * v_config._K_BRAKE_D * (current_velocity - meas_prev) + (2.0 * v_config._tau_lpf - v_config._T_sample) * diff_prev) /
-               (2.0 * v_config._tau_lpf + v_config._T_sample);
+        // Velocity PID action
+        double Prop_vc = v_config._K_BRAKE_P * e_vc;
+        double Integ_vc = v_config._K_BRAKE_I * e_i_vc;
+        double Diff_vc = v_config._K_BRAKE_D * e_d_vc;
 
-        // Anti-wind-up using Integrator Clamping
-        if (v_config._BRAKE_PEDAL_MAX > prop)
-            lim_max_integ = v_config._BRAKE_PEDAL_MAX - prop;
+        double PID_vc = Prop_vc + Integ_vc + Diff_vc;
+
+        e_prev_vc = e_vc;
+
+        // ################# Spacing Controller #################
+        // Error current Spacing
+        e_sc = -1*(cmd_spacing - current_spacing);
+        // if (e_sc > 0 && e_sc <= 1) {  // added @ 2016/Aug/29
+        //     e_sc = 0;
+        // }
+        // Error Derivative Spacing
+        e_d_sc = e_sc - e_prev_sc;
+        brake_diff_array_sc[brake_diff_index_sc++] = e_sc;
+        brake_diff_index_sc %= v_config._K_BRAKE_I_CYCLES;
+        brake_diff_sum_sc = 0;
+        for (int i = 0; i < v_config._K_BRAKE_I_CYCLES; i++) {
+            brake_diff_sum_sc += brake_diff_array_sc[i];
+        }
+        if (brake_diff_sum_sc > v_config._BRAKE_MAX_I) {
+            e_i_sc = v_config._BRAKE_MAX_I;
+        } else {
+            e_i_sc = brake_diff_sum_sc;
+        }
+
+        // Spacing PID action
+        if (-e_sc >= 50.0)
+        {
+            e_sc = -50;
+        }
+        double Prop_sc = -v_config._K_BRAKE_P * e_sc;
+        double Integ_sc = -v_config._K_BRAKE_I * e_i_sc;
+        double Diff_sc = -v_config._K_BRAKE_D * e_d_sc;
+
+        double PID_sc = Prop_sc + Integ_sc + Diff_sc;
+
+        e_prev_sc = e_sc;
+
+        // ################# Determine the Mode #################
+        double lim_max_integ = 0.0;
+        double lim_min_integ = 0.0;
+        if (PID_sc <= PID_vc)
+        {// Spacing Controller
+
+            // Anti-wind-up via Dynamic Integrator Clamping Velocity
+            if (v_config._BRAKE_PEDAL_MAX > Prop_sc)
+                lim_max_integ = v_config._BRAKE_PEDAL_MAX - Prop_sc;
+            else
+                lim_max_integ = 0.0;
+
+            if (0 < Prop_sc)
+                lim_min_integ = -Prop_sc;
+            else
+                lim_min_integ = 0.0;
+            
+            // Constraint Integrator Velocity
+            if (Integ_sc > lim_max_integ)
+                Integ_sc = lim_max_integ;
+            else if (Integ_sc < lim_min_integ)
+                Integ_sc = lim_min_integ;
+
+            target_brake_stroke = Prop_sc + Integ_sc + Diff_sc + v_config._BRAKE_PEDAL_OFFSET;
+
+            if ((current_velocity * 2.6) < 1)
+            {
+                e_i_sc = 0.0;
+                e_prev_sc = 0.0;
+                brake_diff_index_sc = 0.0;
+                brake_diff_sum_sc = 0.0;
+            }
+
+            // Clear all other modes
+            e_i_vc = 0.0;
+            e_prev_vc = 0.0;
+            brake_diff_index_vc = 0.0;
+            brake_diff_sum_vc = 0.0;
+        }
         else
-            lim_max_integ = 0.0;
+        { // Velocity Controller
 
-        if (0.0 < prop)
-            lim_max_integ = -prop;
-        else
-            lim_min_integ = 0.0;
+            // Anti-wind-up via Dynamic Integrator Clamping Velocity
+            if (v_config._BRAKE_PEDAL_MAX > Prop_vc)
+                lim_max_integ = v_config._BRAKE_PEDAL_MAX - Prop_vc;
+            else
+                lim_max_integ = 0.0;
 
-        // Constrain Integrator
-        if (integ > lim_max_integ)
-            integ = lim_max_integ;
+            if (0 < Prop_vc)
+                lim_min_integ = -Prop_vc;
+            else
+                lim_min_integ = 0.0;
+            
+            // Constraint Integrator Velocity
+            if (Integ_vc > lim_max_integ)
+                Integ_vc = lim_max_integ;
+            else if (Integ_vc < lim_min_integ)
+                Integ_vc = lim_min_integ;
 
-        else if (integ < lim_min_integ)
-            integ = lim_min_integ;
+            target_brake_stroke = Prop_vc + Integ_vc + Diff_vc + v_config._BRAKE_PEDAL_OFFSET;
 
-        target_brake_stroke = prop + integ + diff;
+            // Clear all other modes
+            e_i_sc = 0.0;
+            e_prev_sc = 0.0;
+            brake_diff_index_sc = 0.0;
+            brake_diff_sum_sc = 0.0;
+        }
 
-        // target_brake_stroke = v_config._K_BRAKE_P * e + v_config._K_BRAKE_I * e_i + v_config._K_BRAKE_D * e_d;
+        // CACC Mode
+        if (cacc_mode)
+        {
+            target_brake_stroke += pred_out;
+        }
 
+        // target_brake_stroke = v_config._K_BRAKE_P * e_vc + v_config._K_BRAKE_I * e_i_vc + v_config._K_BRAKE_D * e_d_vc;
         if (target_brake_stroke > v_config._BRAKE_PEDAL_MAX) {
             target_brake_stroke = v_config._BRAKE_PEDAL_MAX;
         } else if (target_brake_stroke < 0) {
@@ -236,16 +430,14 @@ double _brake_stroke_pid_control(double current_velocity, double cmd_velocity)
         // cout << "e_d = " << e_d << endl;
 
         ret = target_brake_stroke;
-        // Store for Later Use
-        meas_prev = current_velocity;
-        diff_prev = diff;
-        e_prev = e;
+
+        printf("e_sc = %lf\n", e_sc);
 
 #if 1 /* log */
         // ofstream ofs("/tmp/drv_brake.log", ios::app);
         ofstream ofs("/tmp/drv.log", ios::app);
-        ofs << "de-accel:" << cmd_velocity << " " << current_velocity << " " << e << " " << e_i << " " << e_d << " " << target_brake_stroke << " "
-            << v_info.brake_stroke << " " << v_info.accel_stroke << " " << e_prev << " "
+        ofs << "de-accel:" << cmd_velocity << " " << current_velocity << " " << e_vc << " " << e_i_vc << " " << e_d_vc << " " << target_brake_stroke << " "
+            << v_info.brake_stroke << " " << v_info.accel_stroke << " " << e_prev_vc << " "
 
             << endl;
 #endif
@@ -322,21 +514,44 @@ void set_brake_stroke(double brake_stroke)
     canbus_write(CAN_ID_CMD_BRAKE, (char *) msg, sizeof(msg));
 }
 
-void PedalControl(double current_velocity, double cmd_velocity)
+void PedalControl(double current_velocity, double cmd_velocity, double current_spacing, double pred_out, double leading_velocity)
 {
     // static uint8_t vel_buffer_size = 10;
     // double old_velocity = 0.0;
     double accel_stroke = 0.0;
     double brake_stroke = 0.0;
 
+    double cmd_spacing = 5.0 + (0.8 * (current_velocity * 2.6));
+    double error_spacing = cmd_spacing - current_spacing;
     if (cmd_velocity > v_config.SPEED_LIMIT)
         cmd_velocity = v_config.SPEED_LIMIT;
 
-    if ((fabs(cmd_velocity) + 1.5) >= current_velocity && (cmd_velocity != 0.0)) {
-        cout << "accelerate: current_velocity=" << current_velocity << ", cmd_velocity=" << cmd_velocity << endl;
-        accel_stroke = _accel_stroke_pid_control(current_velocity, fabs(cmd_velocity));
+    if ((cmd_velocity == 0.0 && current_velocity != 0.0) || (leading_velocity <= 1.5 && error_spacing > 1.0) ) {
+        cout << RED << "stop: current_velocity=" << current_velocity << ", cmd_velocity=" << cmd_velocity << "current_spacing=" << current_spacing << ", cmd_spacing=" << cmd_spacing << ", pred_out=" << pred_out << RESET << endl;
+        if ((current_velocity * 2.6) < 4.0) {  // nearly stopping
+            set_drv_stroke(0);
+            brake_stroke = _stopping_control(current_velocity);
+            cout << "SET_BRAKE_STROKE(" << brake_stroke << ")" << endl;
+            set_brake_stroke(brake_stroke);
+        } else {
+            brake_stroke = _brake_stroke_pid_control(current_velocity, 0, cmd_spacing, current_spacing, pred_out);
+            if (brake_stroke > 0) {
+                cout << "SET_BRAKE_STROKE(" << brake_stroke << ")" << endl;
+                set_brake_stroke(brake_stroke);
+                set_drv_stroke(0);
+            } else {
+                cout << "SET_DRV_STROKE(0)" << endl;
+                set_drv_stroke(0);
+                cout << "SET_DRV_STROKE(" << -brake_stroke << ")" << endl;
+                set_drv_stroke(-brake_stroke);
+            }
+        }
+    } else if ((fabs(cmd_velocity) + (1.5/2.6)) >= current_velocity && (cmd_velocity != 0.0)) {
+        cout << GREEN << "accelerate: current_velocity=" << current_velocity << ", pred_out=" << pred_out << ", error_spacing=" << error_spacing << RESET << endl;
+
+        accel_stroke = _accel_stroke_pid_control(current_velocity, fabs(cmd_velocity), cmd_spacing, current_spacing, pred_out);
         if (accel_stroke > 0) {
-            cout << "SET_DRV_STROKE(" << accel_stroke << ")" << endl;
+            cout << CYAN << "SET_DRV_STROKE(" << accel_stroke << ")" << RESET << endl;
             set_brake_stroke(0);
             set_drv_stroke(accel_stroke);
         } else {
@@ -345,9 +560,9 @@ void PedalControl(double current_velocity, double cmd_velocity)
             cout << "SET_BRAKE_STROKE(" << -accel_stroke << ")" << endl;
             set_brake_stroke(-accel_stroke);
         }
-    } else if ((fabs(cmd_velocity) + 1.5) < current_velocity && fabs(cmd_velocity) > 0.0) {
-        cout << "decelerate: current_velocity=" << current_velocity << ", cmd_velocity=" << cmd_velocity << endl;
-        brake_stroke = _brake_stroke_pid_control(current_velocity, fabs(cmd_velocity));
+    } else if ((fabs(cmd_velocity) + (1.5/2.6)) < current_velocity && fabs(cmd_velocity) > 0.0) {
+        cout << YELLOW << "decelerate: current_velocity=" << current_velocity << ", pred_out=" << pred_out << ", error_spacing=" << error_spacing << RESET << endl;
+        brake_stroke = _brake_stroke_pid_control(current_velocity, fabs(cmd_velocity), cmd_spacing, current_spacing, pred_out);
         cout << "brake_stroke===" << brake_stroke << ")" << endl;
         if (brake_stroke > 0) {
             cout << "SET_BRAKE_STROKE(" << brake_stroke << ")" << endl;
@@ -361,26 +576,6 @@ void PedalControl(double current_velocity, double cmd_velocity)
                 set_drv_stroke(-brake_stroke + (v_config._K_ACCEL_OFFSET) /*workaround for xgene car*/);
             else
                 set_drv_stroke(-brake_stroke);
-        }
-    } else if (cmd_velocity == 0.0 && current_velocity != 0.0) {
-        cout << "stopping: current_velocity=" << current_velocity << ", cmd_velocity=" << cmd_velocity << endl;
-        if (current_velocity < 4.0) {  // nearly stopping
-            set_drv_stroke(0);
-            brake_stroke = _stopping_control(current_velocity);
-            cout << "SET_BRAKE_STROKE(" << brake_stroke << ")" << endl;
-            set_brake_stroke(brake_stroke);
-        } else {
-            brake_stroke = _brake_stroke_pid_control(current_velocity, 0);
-            if (brake_stroke > 0) {
-                cout << "SET_BRAKE_STROKE(" << brake_stroke << ")" << endl;
-                set_brake_stroke(brake_stroke);
-                set_drv_stroke(0);
-            } else {
-                cout << "SET_DRV_STROKE(0)" << endl;
-                set_drv_stroke(0);
-                cout << "SET_DRV_STROKE(" << -brake_stroke << ")" << endl;
-                set_drv_stroke(-brake_stroke);
-            }
         }
     } else if (cmd_velocity == current_velocity) {
         // Acer add
@@ -399,7 +594,7 @@ void PedalControl(double current_velocity, double cmd_velocity)
         }
     } else {
         cout << "unknown: current_velocity=" << current_velocity << ", cmd_velocity=" << cmd_velocity
-             << ", v_config.SPEED_LIMIT=" << v_config.SPEED_LIMIT << endl;
+             << ", v_config.SPEED_LIMIT=" << v_config.SPEED_LIMIT << "current_spacing=" << current_spacing <<  ", cmd_spacing=" << cmd_spacing << ", pred_out=" << pred_out << endl;
     }
 
 #if 1 /* log */

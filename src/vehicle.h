@@ -19,6 +19,7 @@
 #include <sensor_msgs/Imu.h>
 #include <tablet_socket_msgs/gear_cmd.h>
 #include <tablet_socket_msgs/mode_cmd.h>
+#include <std_msgs/Float64.h>
 
 #include <netinet/in.h>
 #include <pthread.h>
@@ -30,6 +31,15 @@
 #include <iostream>
 #include <string>
 
+#define RESET   "\033[0m"
+#define BLACK   "\033[30m"      /* Black */
+#define RED     "\033[31m"      /* Red */
+#define GREEN   "\033[32m"      /* Green */
+#define YELLOW  "\033[33m"      /* Yellow */
+#define BLUE    "\033[34m"      /* Blue */
+#define MAGENTA "\033[35m"      /* Magenta */
+#define CYAN    "\033[36m"      /* Cyan */
+#define WHITE   "\033[37m"      /* White */
 
 #define CAN_CHANNEL 0
 #define CAN_BITRATE BAUD_500K
@@ -150,6 +160,9 @@ typedef struct vehicle_cmd {
     int brake_stroke;
     int steering_angle;
     char light;
+    double leading_pedal;
+    double leading_distance;
+    double leading_velocity;
     //   vehicle_enable_cmds_t enablesCMDs;
 } vehicle_cmd_t;
 
@@ -224,6 +237,9 @@ void gearCMDCallback(const tablet_socket_msgs::gear_cmd &gear);
 void accellCMDCallback(const autoware_msgs::AccelCmd &accell);
 void steerCMDCallback(const autoware_msgs::SteerCmd &steer);
 void brakeCMDCallback(const autoware_msgs::BrakeCmd &brake);
+void pedalCMDCallback(const std_msgs::Float64 &leading_pedal);
+void distCMDCallback(const std_msgs::Float64 &leading_distance);
+void velCMDCallback(const std_msgs::Float64 &leading_velocity);
 void lidarSpeedcallback(const geometry_msgs::TwistStamped &msg);
 void RTK_Speedcallback(const geometry_msgs::TwistStamped &msg);
 void IMU_callback(const sensor_msgs::ImuConstPtr &IMU_ptr);
@@ -236,7 +252,7 @@ void *canReceiver(void *unused);
 void *canCMDsender(void *unused);
 void send_xgeneCan_cmd(void);
 
-void PedalControl(double current_velocity, double cmd_velocity);
+void PedalControl(double current_velocity, double cmd_velocity, double current_spacing, double pred_out, double leading_velocity);
 
 
 void canbus_write(long id, char msg[], int len);

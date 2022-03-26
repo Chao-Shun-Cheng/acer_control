@@ -129,13 +129,16 @@ int main(int argc, char **argv)
     siginterrupt(SIGINT, 1);
 
 
-    ros::Subscriber sub[7];
+    ros::Subscriber sub[9];
     sub[0] = nh.subscribe("/twist_cmd", 1, twistCMDCallback);
     sub[1] = nh.subscribe("/mode_cmd", 1, modeCMDCallback);
     sub[2] = nh.subscribe("/gear_cmd", 1, gearCMDCallback);
     sub[3] = nh.subscribe("/accel_cmd", 1, accellCMDCallback);
     sub[4] = nh.subscribe("/steer_cmd", 1, steerCMDCallback);
     sub[5] = nh.subscribe("/brake_cmd", 1, brakeCMDCallback);
+    sub[6] = nh.subscribe("/leading_car_throttle", 1, pedalCMDCallback);
+    sub[7] = nh.subscribe("/leading_car_distance", 1, distCMDCallback);
+    sub[8] = nh.subscribe("/leading_car_velocity", 1, velCMDCallback);
     // sub[6] = nh.subscribe("/enable_cmds",  1, enableCMDCallback);
 
     loading_vehicle_config();

@@ -8,7 +8,7 @@ vehicle_config:
   vendor_ID: 2
   car_ID: 2
   # CAN DEV: 1->Kvaser, 2->SocketCAN
-  CAN_DEV_ID: 2
+  CAN_DEV_ID: 1
 
   STEERING_ANGLE_MAX: 480.0
 # TURNING_RADIUS_MIN: 3.53
@@ -19,12 +19,12 @@ vehicle_config:
   SPEED_LIMIT: 45 # km/h
 
   # PID ACCEL param
-  _K_ACCEL_P_UNTIL20: 8.0 #20 4
-  _K_ACCEL_I_UNTIL20: 0.07 #0.07
-  _K_ACCEL_D_UNTIL20: 4.0
-  _K_ACCEL_P_UNTIL10: 8.0  #8.0  (for 0-10km/h)
-  _K_ACCEL_I_UNTIL10: 0.07 #0.07 (for 0-10km/h)
-  _K_ACCEL_D_UNTIL10: 4.0
+  _K_ACCEL_P_UNTIL20: 23.0 #20 4
+  _K_ACCEL_I_UNTIL20: 0.5 #0.07
+  _K_ACCEL_D_UNTIL20: 4.6 #2.3
+  _K_ACCEL_P_UNTIL10: 23.0  #8.0  (for 0-10km/h)
+  _K_ACCEL_I_UNTIL10: 0.5 #0.07 (for 0-10km/h)
+  _K_ACCEL_D_UNTIL10: 4.6 #2.3 #4.0
 
   _K_ACCEL_I_GAIN: 0
   _K_ACCEL_OFFSET: 10
@@ -33,9 +33,9 @@ vehicle_config:
   _ACCEL_PEDAL_OFFSET: 10
 
   # PID BRAKE param
-  _K_BRAKE_P: 2.0 #2.0
-  _K_BRAKE_I: 0.15 # 0.15
-  _K_BRAKE_D: 1.0 #1.0
+  _K_BRAKE_P: 23.0 #2.0
+  _K_BRAKE_I: 0.5 # 0.15
+  _K_BRAKE_D: 4.6 #2.3 #1.0
   _K_BRAKE_I_CYCLES: 20
 
   _BRAKE_MAX_I: 1000 #1000
