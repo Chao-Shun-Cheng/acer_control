@@ -1,8 +1,8 @@
 <launch>
 
-<arg name="info_path" default="/home/kenny/catkin_ws/src/acer_control/vehicle_config/xgene_muleCar3.yaml"/>
+<arg name="info_path" default="/home/mec/catkin_ws/src/acer_control/vehicle_config/xgene_muleCar3.yaml"/>
 
 <rosparam command="load" file="$(arg info_path)"/>
 
-<node pkg="acer_control" type="acer_vehicle_control" name="acer_vehicle_control" output="screen">
+<node pkg="acer_control" type="acer_vehicle_control" name="acer_vehicle_control" output="screen"/>
 </launch>
