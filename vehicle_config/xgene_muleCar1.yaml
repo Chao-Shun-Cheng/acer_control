@@ -18,12 +18,12 @@ vehicle_config:
   # km/hr
   SPEED_LIMIT: 47 # km/h
 
-  _K_ACCEL_P_UNTIL20: 8.0 #25
-  _K_ACCEL_I_UNTIL20: 0.07 #0.07 #0.9
-  _K_ACCEL_D_UNTIL20: 4.0
-  _K_ACCEL_P_UNTIL10: 8.0  #8.0  (for 0-10km/h)
-  _K_ACCEL_I_UNTIL10: 0.07 #0.07 (for 0-10km/h)
-  _K_ACCEL_D_UNTIL10: 4.0
+  _K_ACCEL_P_UNTIL20: 23.0 #25
+  _K_ACCEL_I_UNTIL20: 0.5 #0.07 #0.9
+  _K_ACCEL_D_UNTIL20: 2.3
+  _K_ACCEL_P_UNTIL10: 23.0  #8.0  (for 0-10km/h)
+  _K_ACCEL_I_UNTIL10: 0.25 #0.07 (for 0-10km/h)
+  _K_ACCEL_D_UNTIL10: 2.3 # 4.0
 
   _K_ACCEL_I_GAIN: 0
   _K_ACCEL_OFFSET: 10
@@ -31,9 +31,9 @@ vehicle_config:
   _ACCEL_PEDAL_MAX: 255
   _ACCEL_PEDAL_OFFSET: 10
 
-  _K_BRAKE_P: 3.0 #1.0
-  _K_BRAKE_I: 0.35 # 0.3
-  _K_BRAKE_D: 1.0 #1.0
+  _K_BRAKE_P: 23.0 #3, 1.0
+  _K_BRAKE_I: 0.5 # 0.35
+  _K_BRAKE_D: 2.3 #1.0
   _K_BRAKE_I_CYCLES: 20
   _BRAKE_MAX_I: 1000 #1000
   _BRAKE_PEDAL_MAX: 200
