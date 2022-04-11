@@ -97,6 +97,7 @@ typedef struct vehicle_config {
     int vendor_ID;
     int car_ID;
     int CAN_dev_ID;
+    double _BIAS_VEL;
     double SPEED_LIMIT;
 
     // steering
@@ -134,6 +135,9 @@ typedef struct vehicle_config {
     double _BRAKE_PEDAL_STOPPING_MED;
     double _BRAKE_PEDAL_OFFSET;
 
+    //cacc param
+    double _MIN_DIST;
+    double _TIME_GAP;
 } vehicle_config_t;
 
 typedef struct vehicle_info {
@@ -239,6 +243,7 @@ void steerCMDCallback(const autoware_msgs::SteerCmd &steer);
 void brakeCMDCallback(const autoware_msgs::BrakeCmd &brake);
 void pedalCMDCallback(const std_msgs::Float32 &leading_pedal);
 void distCMDCallback(const std_msgs::Float32 &leading_distance);
+void uwbCMDCallback(const std_msgs::Float32 &leading_distance);
 void velCMDCallback(const std_msgs::Float32 &leading_velocity);
 void lidarSpeedcallback(const geometry_msgs::TwistStamped &msg);
 void RTK_Speedcallback(const geometry_msgs::TwistStamped &msg);

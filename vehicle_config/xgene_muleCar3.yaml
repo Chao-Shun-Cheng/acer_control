@@ -6,9 +6,11 @@ vehicle_info:
 vehicle_config:
   # acer_vendor_ID: 1, xgene_vendor_ID:2
   vendor_ID: 2
-  car_ID: 2
+  car_ID: 3
   # CAN DEV: 1->Kvaser, 2->SocketCAN
   CAN_DEV_ID: 1
+  # Velocity Bias: 1->2.4, 3->2.6
+  _BIAS_VEL: 2.6
 
   STEERING_ANGLE_MAX: 480.0
 # TURNING_RADIUS_MIN: 3.53
@@ -44,6 +46,8 @@ vehicle_config:
   _BRAKE_PEDAL_STOPPING_MED: 20 #35
   _BRAKE_PEDAL_OFFSET: 10
 
-  # anti wind-up and lpf
-  _T_sample: 0.5
-  _tau_lpf: 15.0
+  # cacc param
+  _TIME_GAP: 0.7
+  _MIN_DIST: 5
+  
+  

@@ -34,6 +34,7 @@ double _accel_stroke_pid_control(double current_velocity, double cmd_velocity, d
     double e_i, e_i_vc, e_i_sc;
     double e_d, e_d_vc, e_d_sc;
     double ret;
+    double pred_out_prev;
 
     // acclerate by releasing the brake pedal if pressed.
     if (v_info.brake_stroke > v_config._BRAKE_PEDAL_OFFSET || v_info.control_mode != 1 /*auto pilot mode*/) {
@@ -52,12 +53,14 @@ double _accel_stroke_pid_control(double current_velocity, double cmd_velocity, d
         e_prev_vc = 0;
         e_prev_sc = 0;
         e_prev = 0;
+        pred_out_prev = 0.0;
         clear_diff();
     } else {  // PID control
         double target_accel_stroke;
 
         // true: active ; false: do Not active
         bool cacc_mode = true;
+        // bool sc_mode = false;
 
         // ################# Velocity Controller #################
         // Error current velocity
@@ -143,9 +146,9 @@ double _accel_stroke_pid_control(double current_velocity, double cmd_velocity, d
             else if (Integ_sc < lim_min_integ)
                 Integ_sc = lim_min_integ;
 
-            target_accel_stroke = Prop_sc + Integ_sc + Diff_sc;// + v_config._K_ACCEL_OFFSET;
-
-            if ((current_velocity * 2.6) < 1.0)
+            target_accel_stroke = Prop_sc + Integ_sc + Diff_sc + v_config._K_ACCEL_OFFSET;
+            
+            if ((current_velocity * v_config._BIAS_VEL) < 1.0)
             {
                 e_i_sc = 0.0;
                 accel_diff_sum_sc = 0.0;
@@ -155,6 +158,9 @@ double _accel_stroke_pid_control(double current_velocity, double cmd_velocity, d
             // Clear other mode values
             accel_diff_sum_vc = 0;
             e_prev_vc = 0;
+
+            // Activated sc mode
+            // sc_mode = true;
         }
         else
         { // Velocity Controller
@@ -181,12 +187,16 @@ double _accel_stroke_pid_control(double current_velocity, double cmd_velocity, d
             // Clear other mode values
             accel_diff_sum_sc = 0;
             e_prev_sc = 0;
+
+            // De-Activated sc mode
+            // sc_mode = false;
         }     
 
         // CACC Mode
         if (cacc_mode)
         {
-            target_accel_stroke += pred_out;
+            target_accel_stroke += pred_out - (0.5 * (pred_out - pred_out_prev));
+            pred_out_prev = pred_out;
         }
         
 
@@ -249,6 +259,7 @@ double _brake_stroke_pid_control(double current_velocity, double cmd_velocity, d
     static double brake_diff_array_sc[MAX_K_BRAKE_I_CYCLES] = {0};
     double e_i, e_i_vc, e_i_sc;
     double e_d, e_d_vc, e_d_sc;
+    double pred_out_prev;
     double ret;
 
     // decelerate by releasing the accel pedal if pressed.
@@ -271,13 +282,16 @@ double _brake_stroke_pid_control(double current_velocity, double cmd_velocity, d
             brake_diff_array_sc[brake_diff_index_sc] = 0;
         }
         brake_diff_index_sc = 0;
+
+        pred_out_prev = 0.0;
         
         clear_diff();
     } else {  // PID control
         double target_brake_stroke;
 
         // true: active; false: do Not active
-        bool cacc_mode = true;
+        bool cacc_mode = false;
+        // bool sc_mode = false;
 
         // ################# Velocity Controller #################
         // Error current velocity
@@ -366,9 +380,9 @@ double _brake_stroke_pid_control(double current_velocity, double cmd_velocity, d
             else if (Integ_sc < lim_min_integ)
                 Integ_sc = lim_min_integ;
 
-            target_brake_stroke = Prop_sc + Integ_sc + Diff_sc + v_config._BRAKE_PEDAL_OFFSET;
+            target_brake_stroke = Prop_sc + Integ_sc + Diff_sc;// + v_config._BRAKE_PEDAL_OFFSET;
 
-            if ((current_velocity * 2.6) < 1)
+            if ((current_velocity * v_config._BIAS_VEL) < 1)
             {
                 e_i_sc = 0.0;
                 e_prev_sc = 0.0;
@@ -381,6 +395,9 @@ double _brake_stroke_pid_control(double current_velocity, double cmd_velocity, d
             e_prev_vc = 0.0;
             brake_diff_index_vc = 0.0;
             brake_diff_sum_vc = 0.0;
+
+            // Activated sc mode
+            // sc_mode = true;
         }
         else
         { // Velocity Controller
@@ -402,20 +419,24 @@ double _brake_stroke_pid_control(double current_velocity, double cmd_velocity, d
             else if (Integ_vc < lim_min_integ)
                 Integ_vc = lim_min_integ;
 
-            target_brake_stroke = Prop_vc + Integ_vc + Diff_vc + v_config._BRAKE_PEDAL_OFFSET;
+            target_brake_stroke = Prop_vc + Integ_vc + Diff_vc;// + v_config._BRAKE_PEDAL_OFFSET;
 
             // Clear all other modes
             e_i_sc = 0.0;
             e_prev_sc = 0.0;
             brake_diff_index_sc = 0.0;
             brake_diff_sum_sc = 0.0;
+
+            // De-Activated sc mode
+            // sc_mode = false;
         }
 
         // CACC Mode
-        if (cacc_mode)
-        {
-            target_brake_stroke += pred_out;
-        }
+        // if (cacc_mode)
+        // {
+        //     target_brake_stroke += pred_out - (0.5 * (pred_out - pred_out_prev));
+        //     pred_out_prev = pred_out;
+        // }
 
         // target_brake_stroke = v_config._K_BRAKE_P * e_vc + v_config._K_BRAKE_I * e_i_vc + v_config._K_BRAKE_D * e_d_vc;
         if (target_brake_stroke > v_config._BRAKE_PEDAL_MAX) {
@@ -524,17 +545,30 @@ void PedalControl(double current_velocity, double cmd_velocity, double current_s
     double accel_stroke = 0.0;
     double brake_stroke = 0.0;
 
-    double cmd_spacing = 5.0 + (0.8 * (current_velocity * 2.6));
+    double cmd_spacing = v_config._MIN_DIST + (v_config._TIME_GAP * (current_velocity * v_config._BIAS_VEL));
     double error_spacing = cmd_spacing - current_spacing;
     spacing.data = error_spacing;
     error_spacing_pub.publish(spacing);
+
+    // Logic CACC
+    bool isValid_Accel_vc = (fabs(cmd_velocity) + (1.5/v_config._BIAS_VEL)) >= current_velocity;
+    bool isValid_Decel_vc = (fabs(cmd_velocity) + (1.5/v_config._BIAS_VEL)) < current_velocity;
+    bool isValid_Decel_sc = (cmd_spacing + 0.5)  >= current_spacing;
+    bool isValid_Accel_sc = cmd_spacing < current_spacing;
+
+    bool cond1 = (current_spacing < 1.25 * cmd_spacing);
+    bool cond2 = (current_velocity > 0.5);
+    bool cond3 = (leading_velocity - current_velocity < 1.0);
+
+
     
     if (cmd_velocity > v_config.SPEED_LIMIT)
         cmd_velocity = v_config.SPEED_LIMIT;
     cout << "-----------------------" << endl;
-    if ((cmd_velocity == 0.0 && current_velocity != 0.0) || (leading_velocity <= 1.5 && error_spacing > 1.0) ) {
+    // if ((cmd_velocity == 0.0 && current_velocity != 0.0) || (leading_velocity <= 1.0 && error_spacing > 0) ) {
+    if (current_spacing < v_config._MIN_DIST){
         cout << RED << "stop: current_velocity=" << current_velocity << ", cmd_velocity=" << cmd_velocity << "current_spacing=" << current_spacing << ", cmd_spacing=" << cmd_spacing << ", pred_out=" << pred_out << RESET << endl;
-        if ((current_velocity * 2.6) < 4.0) {  // nearly stopping
+        if ((current_velocity * v_config._BIAS_VEL) < 4.0) {  // nearly stopping
             set_drv_stroke(0);
             brake_stroke = _stopping_control(current_velocity);
             cout << "SET_BRAKE_STROKE(" << brake_stroke << ")" << endl;
@@ -552,21 +586,8 @@ void PedalControl(double current_velocity, double cmd_velocity, double current_s
                 set_drv_stroke(-brake_stroke);
             }
         }
-    } else if ((fabs(cmd_velocity) + (1.5/2.6)) >= current_velocity && (cmd_velocity != 0.0)) {
-        cout << GREEN << "accelerate: current_velocity=" << current_velocity << ", cmd_velocity=" << cmd_velocity << "current_spacing=" << current_spacing << ", cmd_spacing=" << cmd_spacing << ", pred_out=" << pred_out << RESET << endl;
-
-        accel_stroke = _accel_stroke_pid_control(current_velocity, fabs(cmd_velocity), cmd_spacing, current_spacing, pred_out);
-        if (accel_stroke > 0) {
-            cout << CYAN << "SET_DRV_STROKE(" << accel_stroke << ")" << RESET << endl;
-            set_brake_stroke(0);
-            set_drv_stroke(accel_stroke);
-        } else {
-            cout << "SET_DRV_STROKE(0)" << endl;
-            set_drv_stroke(0);
-            cout << "SET_BRAKE_STROKE(" << -accel_stroke << ")" << endl;
-            set_brake_stroke(-accel_stroke);
-        }
-    } else if ((fabs(cmd_velocity) + (1.5/2.6)) < current_velocity && fabs(cmd_velocity) > 0.0) {
+    // } else if ((isValid_Decel_vc || isValid_Decel_sc) && fabs(cmd_velocity) > 0.0 && 0) {
+    } else if (cond1 == true && ( (cond2 == false && cond3 == false) || (cond2 == false && cond3 == true) || (cond2 == true && cond3 == false) || (cond2 == true && cond3 == true) )){
         cout << YELLOW << "decelerate: current_velocity=" << current_velocity << ", cmd_velocity=" << cmd_velocity << "current_spacing=" << current_spacing << ", cmd_spacing=" << cmd_spacing << ", pred_out=" << pred_out << RESET << endl;
         brake_stroke = _brake_stroke_pid_control(current_velocity, fabs(cmd_velocity), cmd_spacing, current_spacing, pred_out);
         cout << "brake_stroke===" << brake_stroke << ")" << endl;
@@ -582,6 +603,21 @@ void PedalControl(double current_velocity, double cmd_velocity, double current_s
                 set_drv_stroke(-brake_stroke + (v_config._K_ACCEL_OFFSET) /*workaround for xgene car*/);
             else
                 set_drv_stroke(-brake_stroke);
+        }
+    // } else if ((isValid_Accel_vc || isValid_Accel_sc) && (cmd_velocity != 0.0)) {
+    } else if (cond1 == false && ( (cond2 == false && cond3 == false) || (cond2 == false && cond3 == true) || (cond2 == true && cond3 == false) || (cond2 == true && cond3 == true) )){
+        cout << GREEN << "accelerate: current_velocity=" << current_velocity << ", cmd_velocity=" << cmd_velocity << "current_spacing=" << current_spacing << ", cmd_spacing=" << cmd_spacing << ", pred_out=" << pred_out << RESET << endl;
+
+        accel_stroke = _accel_stroke_pid_control(current_velocity, fabs(cmd_velocity), cmd_spacing, current_spacing, pred_out);
+        if (accel_stroke > 0) {
+            cout << CYAN << "SET_DRV_STROKE(" << accel_stroke << ")" << RESET << endl;
+            set_brake_stroke(0);
+            set_drv_stroke(accel_stroke);
+        } else {
+            cout << "SET_DRV_STROKE(0)" << endl;
+            set_drv_stroke(0);
+            cout << "SET_BRAKE_STROKE(" << -accel_stroke << ")" << endl;
+            set_brake_stroke(-accel_stroke);
         }
     } else if (cmd_velocity == current_velocity) {
         // Acer add

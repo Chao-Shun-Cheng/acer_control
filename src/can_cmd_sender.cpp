@@ -114,7 +114,7 @@ void velCMDCallback(const std_msgs::Float32 &leading_velocity)
 
 void distCMDCallback(const std_msgs::Float32 &leading_distance)
 {
-    if (leading_distance.data == 0)
+    if (leading_distance.data <= 0)
         v_cmd.leading_distance = 150.0;
     else
         v_cmd.leading_distance = leading_distance.data;
@@ -122,11 +122,18 @@ void distCMDCallback(const std_msgs::Float32 &leading_distance)
     // printf("[ROS CMD] leading_distance : %lf Time=%lld\n", v_cmd.leading_distance, getTime());
 }
 
+void uwbCMDCallback(const std_msgs::Float32 &leading_distance)
+{
+    if (v_cmd.leading_distance == 150 && leading_distance.data != 0)
+        v_cmd.leading_distance = leading_distance.data;
+    // printf("[ROS CMD] leading_distance : %lf Time=%lld\n", v_cmd.leading_distance, getTime());
+}
+
 static bool auto_setVehicleGear(void)
 {
     static bool change_gear_flag = false;
     static int count_down = 0;
-    float target_speed = v_cmd.linear_x / 2.6;
+    float target_speed = v_cmd.linear_x / v_config._BIAS_VEL;
     char current_gear = get_vInfo_gear();
     float current_speed = get_vInfo_velocity();
     float cmd_speed = target_speed;
@@ -229,7 +236,7 @@ static void setVehicleDrv_control()
 {
 #define WHEEL_TO_STEERING (v_config.STEERING_ANGLE_MAX / v_config.WHEEL_ANGLE_MAX)
     static float pre_cmd_steering_angle = 0.0;
-    float cmd_velocity = v_cmd.linear_x / 2.6;
+    float cmd_velocity = v_cmd.linear_x / v_config._BIAS_VEL;
     float cmd_steering_angle;
     float current_velocity = get_vInfo_velocity();
 

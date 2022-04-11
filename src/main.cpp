@@ -72,7 +72,7 @@ int loading_vehicle_config()
     _nh.getParam("/vehicle_config/vendor_ID", v_config.vendor_ID);
     _nh.getParam("/vehicle_config/car_ID", v_config.car_ID);
     _nh.getParam("/vehicle_config/CAN_DEV_ID", v_config.CAN_dev_ID);
-
+    _nh.getParam("/vehicle_config/_BIAS_VEL", v_config._BIAS_VEL);
 
     // steering
     _nh.getParam("/vehicle_config/STEERING_ANGLE_MAX", v_config.STEERING_ANGLE_MAX);
@@ -101,10 +101,6 @@ int loading_vehicle_config()
     _nh.getParam("/vehicle_config/_K_BRAKE_I", v_config._K_BRAKE_I);
     _nh.getParam("/vehicle_config/_K_BRAKE_D", v_config._K_BRAKE_D);
 
-    // anti wind-up and lpf
-    _nh.getParam("/vehicle_config/_T_sample", v_config._T_sample);
-    _nh.getParam("/vehicle_config/_tau_lpf", v_config._tau_lpf);
-
     _nh.getParam("/vehicle_config/_K_BRAKE_I_CYCLES", v_config._K_BRAKE_I_CYCLES);
     if (v_config._K_BRAKE_I_CYCLES > MAX_K_BRAKE_I_CYCLES)
         v_config._K_BRAKE_I_CYCLES = MAX_K_BRAKE_I_CYCLES;
@@ -115,6 +111,9 @@ int loading_vehicle_config()
     _nh.getParam("/vehicle_config/_BRAKE_PEDAL_OFFSET", v_config._BRAKE_PEDAL_OFFSET);
     v_config.is_valid = true;
 
+    // cacc param
+    _nh.getParam("/vehicle_config/_TIME_GAP", v_config._TIME_GAP);
+    _nh.getParam("/vehicle_config/_MIN_DIST", v_config._MIN_DIST);
 
     return 0;
 }
@@ -130,7 +129,7 @@ int main(int argc, char **argv)
     siginterrupt(SIGINT, 1);
 
 
-    ros::Subscriber sub[9];
+    ros::Subscriber sub[10];
     sub[0] = nh.subscribe("/twist_cmd", 1, twistCMDCallback);
     sub[1] = nh.subscribe("/mode_cmd", 1, modeCMDCallback);
     sub[2] = nh.subscribe("/gear_cmd", 1, gearCMDCallback);
@@ -140,6 +139,7 @@ int main(int argc, char **argv)
     sub[6] = nh.subscribe("/leading_car_throttle", 1, pedalCMDCallback);
     sub[7] = nh.subscribe("/leading_car_distance", 1, distCMDCallback);
     sub[8] = nh.subscribe("/leading_car_velocity", 1, velCMDCallback);
+    sub[9] = nh.subscribe("/uwb_distance", 1, uwbCMDCallback);
     // sub[6] = nh.subscribe("/enable_cmds",  1, enableCMDCallback);
 
     loading_vehicle_config();
