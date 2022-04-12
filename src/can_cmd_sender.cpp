@@ -118,7 +118,7 @@ void distCMDCallback(const std_msgs::Float32 &leading_distance)
         v_cmd.leading_distance = 150.0;
     else
         v_cmd.leading_distance = leading_distance.data;
-    
+
     // printf("[ROS CMD] leading_distance : %lf Time=%lld\n", v_cmd.leading_distance, getTime());
 }
 
@@ -264,8 +264,8 @@ static void setVehicleDrv_control()
 
     SteeringControl(cmd_steering_angle);
 
-    printf("cmd_velocity=%f, cmd_steering_angle=%f, leading_distance=%f, leading_pedal=%f\n",
-            cmd_velocity, cmd_steering_angle, (float) v_cmd.leading_distance, (float) v_cmd.leading_pedal);
+    printf("cmd_velocity=%f, cmd_steering_angle=%f, leading_distance=%f, leading_pedal=%f\n", cmd_velocity, cmd_steering_angle,
+           (float) v_cmd.leading_distance, (float) v_cmd.leading_pedal);
 }
 
 static void setDirect_control(void)
